@@ -29,6 +29,7 @@ import javax.persistence.Lob;
 
 import org.holodeckb2b.interfaces.general.IDescription;
 import org.holodeckb2b.interfaces.messagemodel.IEbmsError;
+import org.holodeckb2b.storage.metadata.DefaultMetadataStorageProvider;
 
 /**
  * Is an <i>embeddable</i> JPA persistency class used to store the meta-data of one ebMS Error ad described by {@link
@@ -136,11 +137,25 @@ public class EbmsError implements IEbmsError, Serializable {
     public EbmsError(final IEbmsError source) {
         this.ERROR_CODE = source.getErrorCode();
         this.SEVERITY = source.getSeverity();
-        this.ERROR_MESSAGE = source.getMessage();
+        String message = source.getMessage();
+        if (message == null || message.length() < 1024)
+			this.ERROR_MESSAGE = message;
+		else {
+			DefaultMetadataStorageProvider.TRUNCATION_LOG.warn("Error message value truncated. Original value = {}",
+					message);
+			this.ERROR_MESSAGE = message.substring(0, 1024);
+		}
         this.ORIGIN = source.getOrigin();
         this.CATEGORY = source.getCategory();
         this.REF_TO_MSG_IN_ERROR = source.getRefToMessageInError();
-        this.ERROR_DETAIL = source.getErrorDetail();
+        String errorDetail = source.getErrorDetail();
+        if (errorDetail == null || errorDetail.length() < 10000)
+        	this.ERROR_DETAIL = errorDetail;
+        else {
+        	DefaultMetadataStorageProvider.TRUNCATION_LOG.warn("Error detail value truncated. Original value = {}",
+        			errorDetail);
+			this.ERROR_DETAIL = errorDetail.substring(0, 10000);
+        }
         if (source.getDescription() != null)
             setDescription(new Description(source.getDescription()));
     }

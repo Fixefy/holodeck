@@ -33,6 +33,8 @@ import javax.persistence.OptimisticLockException;
 import javax.persistence.TemporalType;
 import javax.persistence.TypedQuery;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.holodeckb2b.common.VersionInfo;
 import org.holodeckb2b.common.util.MessageUnitUtils;
@@ -72,6 +74,14 @@ public class DefaultMetadataStorageProvider implements IMetadataStorageProvider 
 	 * The running instance of the provider is used by the default UI to retrieve the message meta-data.
 	 */
 	private static DefaultMetadataStorageProvider instance;
+
+	/**
+	 * Shared log for truncation messages. This log is used when a value is truncated to prevent a message unit from
+	 * being persisted.
+	 *
+	 * @since 8.1.1
+	 */
+	public static final Logger TRUNCATION_LOG = LogManager.getLogger(DefaultMetadataStorageProvider.class.getName() + ".truncations");
 
 	@Override
 	public String getName() {

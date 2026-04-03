@@ -23,6 +23,7 @@ import javax.persistence.Embeddable;
 import javax.persistence.Lob;
 
 import org.holodeckb2b.interfaces.general.IDescription;
+import org.holodeckb2b.storage.metadata.DefaultMetadataStorageProvider;
 
 /**
  * Is an <i>embeddable</i> JPA persistency class used to store a description as described by {@link IDescription}
@@ -48,7 +49,12 @@ public class Description implements IDescription, Serializable {
     }
 
     public void setText(final String text) {
-        DESCRIPTION_TEXT = text != null ? text.substring(0, Math.min(10000, text.length())) : null;
+    	if (text == null || text.length() < 10000)
+    		DESCRIPTION_TEXT = text;
+    	else {
+    		DefaultMetadataStorageProvider.TRUNCATION_LOG.warn("Description text truncated. Original value = {}", text);
+    		DESCRIPTION_TEXT = text.substring(0, 10000);
+    	}
     }
 
     @Override

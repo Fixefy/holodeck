@@ -23,6 +23,7 @@ import javax.persistence.Embeddable;
 import javax.persistence.Lob;
 
 import org.holodeckb2b.interfaces.general.IProperty;
+import org.holodeckb2b.storage.metadata.DefaultMetadataStorageProvider;
 
 /**
  * Is an <i>embeddable</i> JPA persistency class used to store a generic property as described by {@link IProperty}
@@ -55,7 +56,12 @@ public class Property implements IProperty, Serializable {
     }
 
     public void setValue(final String value) {
-        VALUE = value;
+        if (value == null || value.length() < 3092)
+        	VALUE = value;
+    	else {
+    		DefaultMetadataStorageProvider.TRUNCATION_LOG.warn("Property value truncated. Original value = {}", value);
+			VALUE = value.substring(0, 3092);
+    	}
     }
 
     @Override
@@ -103,8 +109,8 @@ public class Property implements IProperty, Serializable {
      */
     public Property(final String name, final String value, final String type) {
         this.NAME = name;
-        this.VALUE = value;
         this.TYPE = type;
+        setValue(value);
     }
 
     /*
