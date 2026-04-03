@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 8.1.1
+##### 2026-04-02
+### Changed
+* Long text values for _Message Properties_, _Descriptions_, _Error Details and message_ that exceed the database column 
+  size are now truncated. Truncated values are logged in a separate log named 
+  _org.holodeckb2b.storage.metadata.DefaultMetadataStorageProvider.truncations_
+
+### Fixed
+* Revocation check fails on superseded certificates [#161](https://github.com/holodeck-b2b/Holodeck-B2B/issues/161) (thanks to @BernhardK91 for contributing to this fix)
+
 ## 8.1.0
 ##### 2025-12-29
 ### Added
