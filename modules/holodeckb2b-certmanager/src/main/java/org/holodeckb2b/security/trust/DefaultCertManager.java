@@ -242,7 +242,7 @@ public class DefaultCertManager implements ICertificateManager {
 		} catch (Throwable bcUnavailable) {
 			log.fatal("Required BouncyCastle provider is not available! Details: {}", bcUnavailable.getMessage());
 			throw new SecurityProcessingException("BouncyCastle provider not available!");
-		}       
+		}
         // We enable OCSP by default, even if revocation checking is disabled
         Security.setProperty("ocsp.enable", "true");
 
@@ -561,30 +561,40 @@ public class DefaultCertManager implements ICertificateManager {
 					log.info("Certficate path is trusted!");
 				return new ValidationResult(Trust.OK, cpToCheck);
 			} catch (CertPathValidatorException validationException) {
-				// If reason is "unspecified" or "undetermined" this could be caused by a problem in the OCSP check, so
-				// try again without
 				Reason reason = validationException.getReason();
+				log.warn("Certificate path validation failed - Reason: {}, Message: {}, Certificate: {}, Trace: {}",
+						reason, validationException.getMessage(),
+						validationException.getCertPath() != null && validationException.getIndex() >= 0
+								? CertificateUtils.getSubjectCN((X509Certificate) validationException.getCertPath()
+										.getCertificates().get(validationException.getIndex()))
+								: "N/A",
+						Utils.getExceptionTrace(validationException));
+
+				// If reason is "unspecified" or "undetermined" this could indicate either that the certificate is not
+				// valid, or that there was a problem in executing the OCSP check. In the latter case, try again without
 				if (performRevocationCheck
-					&& (reason == BasicReason.UNSPECIFIED || reason == BasicReason.UNDETERMINED_REVOCATION_STATUS)) {
+					&& (reason == BasicReason.UNDETERMINED_REVOCATION_STATUS
+					|| (reason == BasicReason.UNSPECIFIED && validationException.getCause() != null
+							&& (validationException.getCause() instanceof IOException)))) {
 					try {
 						log.debug("Validation with revocation check failed ({}), retry without",
-									validationException.getMessage());
+								validationException.getMessage());
 						params.setRevocationEnabled(false);
-						PKIXCertPathValidatorResult validation = (PKIXCertPathValidatorResult) validator.validate(cp, params);
+						PKIXCertPathValidatorResult validation = (PKIXCertPathValidatorResult) validator.validate(cp,
+								params);
 						// Add the found trust anchor to cert path to include in result
 						cpToCheck.add(validation.getTrustAnchor().getTrustedCert());
 						log.warn("Certificate path could only be validated without revocation check! {}",
-						getValidatedPath(cpToCheck));
+								getValidatedPath(cpToCheck));
 						return new ValidationResult(Trust.WITH_WARNINGS, cpToCheck, "Revocation could not be checked",
-													new SecurityProcessingException("Revocaction check failed",
-																					validationException));
+								new SecurityProcessingException("Revocaction check failed", validationException));
 					} catch (CertPathValidatorException persistentError) {
 						// Even without revocation check it failed...
 					}
 				}
 				log.error("Trust validation failed! Details: {}", validationException.getMessage());
-				return new ValidationResult(cpToCheck, new SecurityProcessingException("Untrusted cert path",
-																							validationException));
+				return new ValidationResult(cpToCheck,
+						new SecurityProcessingException("Untrusted cert path", validationException));
 
 			}
 		} catch (InvalidAlgorithmParameterException | CertificateException | NoSuchAlgorithmException
