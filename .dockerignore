@@ -5,6 +5,7 @@
 target/
 **/target/
 helm/
+modules/
 *.md
 *.log
 .DS_Store
@@ -13,3 +14,4 @@ nbproject/
 .settings/
 .classpath
 .project
+pom.xml
