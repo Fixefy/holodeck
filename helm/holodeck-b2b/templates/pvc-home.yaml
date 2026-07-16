@@ -1,0 +1,17 @@
+{{- if .Values.home.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: holodeck-b2b-home
+  labels:
+    app.kubernetes.io/name: holodeck-b2b
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.home.persistence.storageClass }}
+  storageClassName: {{ .Values.home.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.home.persistence.size }}
+{{- end }}

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: holodeck-b2b-delivery
+  labels:
+    app.kubernetes.io/name: holodeck-b2b
+data:
+  # Drop-in P-Mode snippet / documentation for DefaultDelivery.
+  # Holodeck file-backend NotifyAndDeliverOperation with format=single_xml packages
+  # eb:UserMessage metadata and base64 payloads into one XML file named
+  # message-<messageId>.xml under the delivery directory (GCS via gcsfuse).
+  # PartProperties such as originalFileName are preserved inside the XML.
+  README: |
+    Configure each receiving Leg DefaultDelivery as:
+
+      class: org.holodeckb2b.backend.file.NotifyAndDeliverOperation
+      Parameter deliveryDirectory={{ .Values.delivery.mountPath }}
+      Parameter format={{ .Values.delivery.format }}
+
+    Delivery directory is a GCS FUSE mount of bucket {{ .Values.delivery.gcsBucket }}.
+  sample-pmode-delivery.xml: |
+    <!-- Fragment for a Holodeck receiving Leg DefaultDelivery -->
+    <DefaultDelivery>
+      <DeliveryMethod>
+        <class>org.holodeckb2b.backend.file.NotifyAndDeliverOperation</class>
+        <Parameter name="deliveryDirectory">{{ .Values.delivery.mountPath }}</Parameter>
+        <Parameter name="format">{{ .Values.delivery.format }}</Parameter>
+      </DeliveryMethod>
+    </DefaultDelivery>

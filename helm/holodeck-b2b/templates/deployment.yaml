@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: holodeck-b2b
+  labels:
+    app.kubernetes.io/name: holodeck-b2b
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: holodeck-b2b
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: holodeck-b2b
+      annotations:
+        gke-gcsfuse/volumes: "true"
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - name: holodeck-b2b
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+          env:
+            - name: HOLODECK_DELIVERY_DIR
+              value: {{ .Values.delivery.mountPath | quote }}
+            - name: HOLODECK_DELIVERY_FORMAT
+              value: {{ .Values.delivery.format | quote }}
+            - name: HOLODECK_GCS_BUCKET
+              value: {{ .Values.delivery.gcsBucket | quote }}
+          volumeMounts:
+            - name: delivery
+              mountPath: {{ .Values.delivery.mountPath }}
+            {{- if .Values.home.persistence.enabled }}
+            - name: home
+              mountPath: /holodeck-b2b/data
+            {{- end }}
+            - name: delivery-config
+              mountPath: /holodeck-b2b/config/delivery
+              readOnly: true
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20
+      volumes:
+        - name: delivery
+          persistentVolumeClaim:
+            claimName: {{ required "delivery.existingClaim is required" .Values.delivery.existingClaim }}
+        {{- if .Values.home.persistence.enabled }}
+        - name: home
+          persistentVolumeClaim:
+            claimName: holodeck-b2b-home
+        {{- end }}
+        - name: delivery-config
+          configMap:
+            name: holodeck-b2b-delivery

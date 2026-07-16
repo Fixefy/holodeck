@@ -1,0 +1,35 @@
+image:
+  repository: devopsfixefy/holodeck
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: holodeck-b2b
+  annotations: {}
+
+delivery:
+  format: single_xml
+  mountPath: /data/msg_in
+  existingClaim: ""
+  gcsBucket: ""
+
+home:
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: standard
+
+service:
+  port: 8080
+
+ingress:
+  enabled: false
+  className: nginx-f5
+  annotations: {}
+  hosts: []
+  tls: []
+
+resources: {}
+
+replicaCount: 1

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: holodeck-b2b
+description: Minimal Holodeck B2B AS4 gateway with single_xml delivery to GCS FUSE
+type: application
+version: 0.1.0
+appVersion: "8.1.1"
